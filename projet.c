@@ -1,7 +1,7 @@
 // Variables pour LCD
 sbit LCD_RS at RB4_bit;
 sbit LCD_EN at RB5_bit;
-sbit LCD_D4 at RB0_bit;
+sbit LCD_D4 at RB0_bit;                                	
 sbit LCD_D5 at RB1_bit;
 sbit LCD_D6 at RB2_bit;
 sbit LCD_D7 at RB3_bit;
@@ -26,7 +26,7 @@ char buff2[16];
 bit flagRaz;
 bit work;
 
-     //variables UART_RX
+//variables UART_RX
 char incomingByte[12];
 int adress = 0;
 char datasent[24];
@@ -38,13 +38,9 @@ char newAdress[8];
 int indexStop;
 bit flag_uart;
 
-//variables Eeprom
-int whereInEeprom = 0;
-
-
-     //variable eeprom
+//variable eeprom
 int EepromAdress;
-char addToEeprom [;
+char addToEeprom[];
 
 // Interruption
 void interrupt(){              // Interrupt routine
@@ -54,7 +50,7 @@ void interrupt(){              // Interrupt routine
       flag = 1;
     }
     if(PORTB.B7 == 1){  // Ajout compteur FDC (RB7)
-      nbBottle ++;
+      endSwitch = 1;
     }
     RBIF_bit = 0;              // Clear Interrupt Flag
   }
@@ -210,17 +206,13 @@ PEIE_bit = 1; // Enable peripheral interrupts
         flag_uart = 0;
     }
     UART1_Write_Text(datasent);
-     
-     //Bouton RAZ
-     if (Button(&PORTC, 1, 1, 1)) {
-       flagRaz = 1;
+    if(endSwitch == 1){
+       endSwitch = 0;
+       for(i = 1000; i<5000; i += 1000){
+         Sound_Play(i, 1000);    // Play sound f = 1000Hz for 1s
        }
-     if (flagRaz && Button(&PORTC, 1, 1, 0)) {
-       nbBottle = 0;                       // reset count
-       flagRaz = 0;
-       }
-
-
+       nbBottle++;
+    } 
      //update LCD after 10ms
      if(count == 2){
        count = 0;

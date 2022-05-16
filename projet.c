@@ -1,7 +1,7 @@
 // Variables pour LCD
 sbit LCD_RS at RB4_bit;
 sbit LCD_EN at RB5_bit;
-sbit LCD_D4 at RB0_bit;                                	
+sbit LCD_D4 at RB0_bit;                                        
 sbit LCD_D5 at RB1_bit;
 sbit LCD_D6 at RB2_bit;
 sbit LCD_D7 at RB3_bit;
@@ -40,45 +40,44 @@ bit flag_uart;
 
 //variable eeprom
 int EepromAdress;
-char addToEeprom[];
+char addToEeprom;
 
 // Interruption
 void interrupt(){              // Interrupt routine
   //interruption externe (RB6)
-  if(RBIF_bit) {         // Checks for Extern Interrupt Flag bit
-    if(PORTB.B6 == 1){   // Arrêt urgence (RB6)
-      flag = 1;
-    }
-    if(PORTB.B7 == 1){  // Ajout compteur FDC (RB7)
-      endSwitch = 1;
-    }
-    RBIF_bit = 0;              // Clear Interrupt Flag
-  }
+   if(RBIF_bit) {         // Checks for Extern Interrupt Flag bit
+     if(PORTB.B6 == 1){   // Arrêt urgence (RB6)
+       flag = 1;
+     }
+     if(PORTB.B7 == 1){  // Ajout compteur FDC (RB7)
+       endSwitch = 1;
+     }
+     RBIF_bit = 0;              // Clear Interrupt Flag
+   }
   //interruption timer
-  if (TMR0IF_bit){ // Timer0 toutes les 5ms
-    TMR0IF_bit = 0;
-    TMR0H = 0xD8;
-    TMR0L = 0xF0;
-    count ++;
-  }
+   if (TMR0IF_bit){ // Timer0 toutes les 5ms
+   TMR0IF_bit = 0;
+   TMR0H = 0xD8;
+   TMR0L = 0xF0;
+   count ++;
+   }
   //interruption UART
-  if(RC1IF_bit) // Checks for Receive Interrupt Flag bit
-  {
-    flag_uart = 1;
-    UART1_Read_Text(incomingByte,"LF",11); // Storing read data
-    RC1IF_bit = 0;
-  }
-}
+   if(RC1IF_bit){ // Checks for Receive Interrupt Flag bit
+   flag_uart = 1;
+   UART1_Read_Text(incomingByte,"LF",11); // Storing read data
+   RC1IF_bit = 0;
+   }
+ }
 
 
 // eeprom write function
 void writeE2prom(int adress, char dataValue){
-  I2C1_Start(); // issue I2C start signal
-  I2C1_Wr(0xA2); // send byte via I2C (device address + W)
-  I2C1_Wr(adress); // send b yte (address of EEPROM location)
-  I2C1_Wr(dataValue); // send data (data to be written)
-  I2C1_Stop(); // issue I2C stop signal
-}
+ I2C1_Start(); // issue I2C start signal
+ I2C1_Wr(0xA2); // send byte via I2C (device address + W)
+ I2C1_Wr(adress); // send b yte (address of EEPROM location)
+ I2C1_Wr(dataValue); // send data (data to be written)
+ I2C1_Stop(); // issue I2C stop signal
+ }
 
 
 void main() {
@@ -107,10 +106,10 @@ void main() {
  Lcd_Cmd(_LCD_CURSOR_OFF);
  I2C1_Init(100000);           // initialize I2C communication
 
-UART1_Init(9600);             //UART INIT
-RC1IE_bit = 1; // turn ON interrupt on UART1 receive
-RC1IF_bit = 0; // Clear interrupt flag
-PEIE_bit = 1; // Enable peripheral interrupts
+ UART1_Init(9600);             //UART INIT
+ RC1IE_bit = 1; // turn ON interrupt on UART1 receive
+ RC1IF_bit = 0; // Clear interrupt flag
+ PEIE_bit = 1; // Enable peripheral interrupts
 
 
  endSwitch = 0;               // Flag for button
@@ -182,44 +181,43 @@ PEIE_bit = 1; // Enable peripheral interrupts
      //UartWork;
      if (flag_uart){
         //UART1_Write_Text(incomingByte);
-        if (strcmp(incomingByte,"#1;0000;0")==0){
-          sprintf(datasent,"%s",incomingByte) ;
-          work = 0;
-        }
-        if(strcmp(incomingByte,"#0;0000;1")==0){
-          sprintf(datasent,"%s",incomingByte) ;
+       if (strcmp(incomingByte,"#1;0000;0")==0){
+         sprintf(datasent,"%s",incomingByte) ;
+         work = 0;
+         }
+       if(strcmp(incomingByte,"#0;0000;1")==0){
+         sprintf(datasent,"%s",incomingByte) ;
           //hexDump();
           //UART1_Write_Text(eeprom_out);                                                           //NOT DONE WITH THIS SHIT
-        }
+         }
         
-        memset(incomingByte, '0', 3);          //replace 3 first carac by '000'
-        for (i = 0; i <7;i++){
-            newAdress[i] = incomingByte[i];
-            }
-        adress = atoi(newAdress);             //adress is int of incomingByte
-        if (adress != 0){
+       memset(incomingByte, '0', 3);          //replace 3 first carac by '000'
+       for (i = 0; i <7;i++){
+         newAdress[i] = incomingByte[i];
+         }
+       adress = atoi(newAdress);             //adress is int of incomingByte
+       if (adress != 0){
            //sprintf(datasent,"%i",adress);
-           whereInEeprom += 1;
-        }
-        sprintf(addToEeprom,"(%s;%s;%s",Adress);
-        writeE2prom(whereInEeprom, addToEeprom);
-        flag_uart = 0;
-    }
-    UART1_Write_Text(datasent);
-    if(endSwitch == 1){
+         EepromAdress += 1;
+         }
+       sprintf(addToEeprom,"(%s;%s;%s",Adress);
+       writeE2prom(EepromAdress, addToEeprom);
+       flag_uart = 0;
+       }
+     UART1_Write_Text(datasent);
+     if(endSwitch == 1){
        endSwitch = 0;
        for(i = 1000; i<5000; i += 1000){
          Sound_Play(i, 1000);    // Play sound f = 1000Hz for 1s
-       }
+         }
        nbBottle++;
-    } 
+       }
      //update LCD after 10ms
      if(count == 2){
        count = 0;
        Lcd_out(2,1,buff2);
        Lcd_Out(1,1,buff1);
        }
-
      }
    }
  }

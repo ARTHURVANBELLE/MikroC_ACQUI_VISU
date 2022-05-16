@@ -1,4 +1,4 @@
-#line 1 "C:/Users/arthu/OneDrive - EPHEC asbl/2AU/Projet COSTA/Partie système/code_Uart_Eeprom/projet.c"
+#line 1 "D:/OneDrive - EPHEC asbl/bac2/q2/systemeEmbarque/Projet/github_arth/projet.c"
 
 sbit LCD_RS at RB4_bit;
 sbit LCD_EN at RB5_bit;
@@ -51,7 +51,7 @@ void interrupt(){
  flag = 1;
  }
  if(PORTB.B7 == 1){
- nbBottle ++;
+ endSwitch = 1;
  }
  RBIF_bit = 0;
  }
@@ -200,21 +200,20 @@ PEIE_bit = 1;
  adress = atoi(newAdress);
  if (adress != 0){
 
+ EepromAdress += 1;
  }
+ sprintf(addToEeprom,"(%s;%s;%s",Adress);
+ writeE2prom(EepromAdress, addToEeprom);
  flag_uart = 0;
  }
  UART1_Write_Text(datasent);
-
-
- if (Button(&PORTC, 1, 1, 1)) {
- flagRaz = 1;
+ if(endSwitch == 1){
+ endSwitch = 0;
+ for(i = 1000; i<5000; i += 1000){
+ Sound_Play(i, 1000);
  }
- if (flagRaz && Button(&PORTC, 1, 1, 0)) {
- nbBottle = 0;
- flagRaz = 0;
+ nbBottle++;
  }
-
-
 
  if(count == 2){
  count = 0;

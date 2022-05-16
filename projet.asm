@@ -15,9 +15,8 @@ L_interrupt1:
 ;projet.c,52 :: 		if(PORTB.B7 == 1){  // Ajout compteur FDC (RB7)
 	BTFSS       PORTB+0, 7 
 	GOTO        L_interrupt2
-;projet.c,53 :: 		nbBottle ++;
-	INFSNZ      _nbBottle+0, 1 
-	INCF        _nbBottle+1, 1 
+;projet.c,53 :: 		endSwitch = 1;
+	BSF         _endSwitch+0, BitPos(_endSwitch+0) 
 ;projet.c,54 :: 		}
 L_interrupt2:
 ;projet.c,55 :: 		RBIF_bit = 0;              // Clear Interrupt Flag
@@ -63,7 +62,7 @@ L_interrupt3:
 L_interrupt4:
 ;projet.c,71 :: 		}
 L_end_interrupt:
-L__interrupt39:
+L__interrupt38:
 	RETFIE      1
 ; end of _interrupt
 
@@ -354,10 +353,10 @@ L_main12:
 	MOVLW       128
 	SUBWF       R0, 0 
 	BTFSS       STATUS+0, 2 
-	GOTO        L__main42
+	GOTO        L__main41
 	MOVLW       7
 	SUBWF       _i+0, 0 
-L__main42:
+L__main41:
 	BTFSC       STATUS+0, 0 
 	GOTO        L_main13
 ;projet.c,147 :: 		LATD = LATD << 1;
@@ -392,10 +391,10 @@ L_main15:
 	MOVLW       128
 	SUBWF       R0, 0 
 	BTFSS       STATUS+0, 2 
-	GOTO        L__main43
+	GOTO        L__main42
 	MOVLW       7
 	SUBWF       _i+0, 0 
-L__main43:
+L__main42:
 	BTFSC       STATUS+0, 0 
 	GOTO        L_main16
 ;projet.c,152 :: 		LATD = LATD >> 1;
@@ -452,7 +451,7 @@ L_main18:
 	MOVF        R0, 1 
 	BTFSC       STATUS+0, 2 
 	GOTO        L_main21
-L__main37:
+L__main36:
 ;projet.c,160 :: 		nbBottle = 0;                       // reset count
 	CLRF        _nbBottle+0 
 	CLRF        _nbBottle+1 
@@ -724,10 +723,10 @@ L_main23:
 	MOVLW       0
 	XORWF       R1, 0 
 	BTFSS       STATUS+0, 2 
-	GOTO        L__main44
+	GOTO        L__main43
 	MOVLW       0
 	XORWF       R0, 0 
-L__main44:
+L__main43:
 	BTFSS       STATUS+0, 2 
 	GOTO        L_main25
 ;projet.c,186 :: 		sprintf(datasent,"%s",incomingByte) ;
@@ -763,10 +762,10 @@ L_main25:
 	MOVLW       0
 	XORWF       R1, 0 
 	BTFSS       STATUS+0, 2 
-	GOTO        L__main45
+	GOTO        L__main44
 	MOVLW       0
 	XORWF       R0, 0 
-L__main45:
+L__main44:
 	BTFSS       STATUS+0, 2 
 	GOTO        L_main26
 ;projet.c,190 :: 		sprintf(datasent,"%s",incomingByte) ;
@@ -809,25 +808,25 @@ L_main27:
 	MOVLW       128
 	SUBWF       R0, 0 
 	BTFSS       STATUS+0, 2 
-	GOTO        L__main46
+	GOTO        L__main45
 	MOVLW       7
 	SUBWF       _i+0, 0 
-L__main46:
+L__main45:
 	BTFSC       STATUS+0, 0 
 	GOTO        L_main28
 ;projet.c,197 :: 		newAdress[i] = incomingByte[i];
 	MOVLW       _newAdress+0
 	ADDWF       _i+0, 0 
-	MOVWF       FSR1 
+	MOVWF       FSR1L+0 
 	MOVLW       hi_addr(_newAdress+0)
 	ADDWFC      _i+1, 0 
-	MOVWF       FSR1H 
+	MOVWF       FSR1L+1 
 	MOVLW       _incomingByte+0
 	ADDWF       _i+0, 0 
-	MOVWF       FSR0 
+	MOVWF       FSR0L+0 
 	MOVLW       hi_addr(_incomingByte+0)
 	ADDWFC      _i+1, 0 
-	MOVWF       FSR0H 
+	MOVWF       FSR0L+1 
 	MOVF        POSTINC0+0, 0 
 	MOVWF       POSTINC1+0 
 ;projet.c,196 :: 		for (i = 0; i <7;i++){
@@ -850,68 +849,99 @@ L_main28:
 	MOVLW       0
 	XORWF       R1, 0 
 	BTFSS       STATUS+0, 2 
-	GOTO        L__main47
+	GOTO        L__main46
 	MOVLW       0
 	XORWF       R0, 0 
-L__main47:
+L__main46:
 	BTFSC       STATUS+0, 2 
 	GOTO        L_main30
-;projet.c,202 :: 		}
+;projet.c,202 :: 		EepromAdress += 1;
+	INFSNZ      _EepromAdress+0, 1 
+	INCF        _EepromAdress+1, 1 
+;projet.c,203 :: 		}
 L_main30:
-;projet.c,203 :: 		flag_uart = 0;
+;projet.c,204 :: 		sprintf(addToEeprom,"(%s;%s;%s",Adress);
+	MOVF        _addToEeprom+0, 0 
+	MOVWF       FARG_sprintf_wh+0 
+	MOVLW       0
+	MOVWF       FARG_sprintf_wh+1 
+	MOVLW       ?lstr_11_projet+0
+	MOVWF       FARG_sprintf_f+0 
+	MOVLW       hi_addr(?lstr_11_projet+0)
+	MOVWF       FARG_sprintf_f+1 
+	MOVLW       higher_addr(?lstr_11_projet+0)
+	MOVWF       FARG_sprintf_f+2 
+	MOVF        _adress+0, 0 
+	MOVWF       FARG_sprintf_wh+5 
+	MOVF        _adress+1, 0 
+	MOVWF       FARG_sprintf_wh+6 
+	CALL        _sprintf+0, 0
+;projet.c,205 :: 		writeE2prom(EepromAdress, addToEeprom);
+	MOVF        _EepromAdress+0, 0 
+	MOVWF       FARG_writeE2prom_adress+0 
+	MOVF        _EepromAdress+1, 0 
+	MOVWF       FARG_writeE2prom_adress+1 
+	MOVF        _addToEeprom+0, 0 
+	MOVWF       FARG_writeE2prom_dataValue+0 
+	CALL        _writeE2prom+0, 0
+;projet.c,206 :: 		flag_uart = 0;
 	BCF         _flag_uart+0, BitPos(_flag_uart+0) 
-;projet.c,204 :: 		}
+;projet.c,207 :: 		}
 L_main24:
-;projet.c,205 :: 		UART1_Write_Text(datasent);
+;projet.c,208 :: 		UART1_Write_Text(datasent);
 	MOVLW       _datasent+0
 	MOVWF       FARG_UART1_Write_Text_uart_text+0 
 	MOVLW       hi_addr(_datasent+0)
 	MOVWF       FARG_UART1_Write_Text_uart_text+1 
 	CALL        _UART1_Write_Text+0, 0
-;projet.c,208 :: 		if (Button(&PORTC, 1, 1, 1)) {
-	MOVLW       PORTC+0
-	MOVWF       FARG_Button_port+0 
-	MOVLW       hi_addr(PORTC+0)
-	MOVWF       FARG_Button_port+1 
-	MOVLW       1
-	MOVWF       FARG_Button_pin+0 
-	MOVLW       1
-	MOVWF       FARG_Button_time_ms+0 
-	MOVLW       1
-	MOVWF       FARG_Button_active_state+0 
-	CALL        _Button+0, 0
-	MOVF        R0, 1 
-	BTFSC       STATUS+0, 2 
+;projet.c,209 :: 		if(endSwitch == 1){
+	BTFSS       _endSwitch+0, BitPos(_endSwitch+0) 
 	GOTO        L_main31
-;projet.c,209 :: 		flagRaz = 1;
-	BSF         _flagRaz+0, BitPos(_flagRaz+0) 
-;projet.c,210 :: 		}
+;projet.c,210 :: 		endSwitch = 0;
+	BCF         _endSwitch+0, BitPos(_endSwitch+0) 
+;projet.c,211 :: 		for(i = 1000; i<5000; i += 1000){
+	MOVLW       232
+	MOVWF       _i+0 
+	MOVLW       3
+	MOVWF       _i+1 
+L_main32:
+	MOVLW       128
+	XORWF       _i+1, 0 
+	MOVWF       R0 
+	MOVLW       128
+	XORLW       19
+	SUBWF       R0, 0 
+	BTFSS       STATUS+0, 2 
+	GOTO        L__main47
+	MOVLW       136
+	SUBWF       _i+0, 0 
+L__main47:
+	BTFSC       STATUS+0, 0 
+	GOTO        L_main33
+;projet.c,212 :: 		Sound_Play(i, 1000);    // Play sound f = 1000Hz for 1s
+	MOVF        _i+0, 0 
+	MOVWF       FARG_Sound_Play_freq_in_hz+0 
+	MOVF        _i+1, 0 
+	MOVWF       FARG_Sound_Play_freq_in_hz+1 
+	MOVLW       232
+	MOVWF       FARG_Sound_Play_duration_ms+0 
+	MOVLW       3
+	MOVWF       FARG_Sound_Play_duration_ms+1 
+	CALL        _Sound_Play+0, 0
+;projet.c,211 :: 		for(i = 1000; i<5000; i += 1000){
+	MOVLW       232
+	ADDWF       _i+0, 1 
+	MOVLW       3
+	ADDWFC      _i+1, 1 
+;projet.c,213 :: 		}
+	GOTO        L_main32
+L_main33:
+;projet.c,214 :: 		nbBottle++;
+	INFSNZ      _nbBottle+0, 1 
+	INCF        _nbBottle+1, 1 
+;projet.c,215 :: 		}
 L_main31:
-;projet.c,211 :: 		if (flagRaz && Button(&PORTC, 1, 1, 0)) {
-	BTFSS       _flagRaz+0, BitPos(_flagRaz+0) 
-	GOTO        L_main34
-	MOVLW       PORTC+0
-	MOVWF       FARG_Button_port+0 
-	MOVLW       hi_addr(PORTC+0)
-	MOVWF       FARG_Button_port+1 
-	MOVLW       1
-	MOVWF       FARG_Button_pin+0 
-	MOVLW       1
-	MOVWF       FARG_Button_time_ms+0 
-	CLRF        FARG_Button_active_state+0 
-	CALL        _Button+0, 0
-	MOVF        R0, 1 
-	BTFSC       STATUS+0, 2 
-	GOTO        L_main34
-L__main36:
-;projet.c,212 :: 		nbBottle = 0;                       // reset count
-	CLRF        _nbBottle+0 
-	CLRF        _nbBottle+1 
-;projet.c,213 :: 		flagRaz = 0;
-	BCF         _flagRaz+0, BitPos(_flagRaz+0) 
-;projet.c,214 :: 		}
-L_main34:
-;projet.c,218 :: 		if(count == 2){
+;projet.c,217 :: 		if(count == 2){
 	MOVLW       0
 	XORWF       _count+1, 0 
 	BTFSS       STATUS+0, 2 
@@ -921,10 +951,10 @@ L_main34:
 L__main48:
 	BTFSS       STATUS+0, 2 
 	GOTO        L_main35
-;projet.c,219 :: 		count = 0;
+;projet.c,218 :: 		count = 0;
 	CLRF        _count+0 
 	CLRF        _count+1 
-;projet.c,220 :: 		Lcd_out(2,1,buff2);
+;projet.c,219 :: 		Lcd_out(2,1,buff2);
 	MOVLW       2
 	MOVWF       FARG_Lcd_Out_row+0 
 	MOVLW       1
@@ -934,7 +964,7 @@ L__main48:
 	MOVLW       hi_addr(_buff2+0)
 	MOVWF       FARG_Lcd_Out_text+1 
 	CALL        _Lcd_Out+0, 0
-;projet.c,221 :: 		Lcd_Out(1,1,buff1);
+;projet.c,220 :: 		Lcd_Out(1,1,buff1);
 	MOVLW       1
 	MOVWF       FARG_Lcd_Out_row+0 
 	MOVLW       1
@@ -944,13 +974,13 @@ L__main48:
 	MOVLW       hi_addr(_buff1+0)
 	MOVWF       FARG_Lcd_Out_text+1 
 	CALL        _Lcd_Out+0, 0
-;projet.c,222 :: 		}
+;projet.c,221 :: 		}
 L_main35:
-;projet.c,224 :: 		}
+;projet.c,223 :: 		}
 L_main7:
-;projet.c,225 :: 		}
+;projet.c,224 :: 		}
 	GOTO        L_main5
-;projet.c,226 :: 		}
+;projet.c,225 :: 		}
 L_end_main:
 	GOTO        $+0
 ; end of _main
